@@ -49,7 +49,7 @@ export default function Categories() {
       }
 
       if (editingCategory) {
-        await categoryService.update(editingCategory.id, data)
+        await categoryService.update(editingCategory._id, data)
         toast.success('Category updated successfully')
       } else {
         await categoryService.create(data)
@@ -141,7 +141,7 @@ export default function Categories() {
                 <Edit className="w-4 h-4" />
                 Edit
               </button>
-              <button onClick={() => handleDelete(category.id)} className="btn bg-red-50 text-red-600 hover:bg-red-100">
+              <button onClick={() => handleDelete(category._id)} className="btn bg-red-50 text-red-600 hover:bg-red-100">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
