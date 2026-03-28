@@ -13,8 +13,8 @@ export default function Categories() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    is_featured: false,
-    sort_order: 0,
+    isFeatured: false,
+    sortOrder: 0,
   })
   const [imageFile, setImageFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -42,8 +42,8 @@ export default function Categories() {
       const data = new FormData()
       data.append('name', formData.name)
       data.append('description', formData.description)
-      data.append('is_featured', formData.is_featured)
-      data.append('sort_order', formData.sort_order)
+      data.append('isFeatured', formData.isFeatured)
+      data.append('sortOrder', formData.sortOrder)
       if (imageFile) {
         data.append('image', imageFile)
       }
@@ -83,16 +83,16 @@ export default function Categories() {
       setFormData({
         name: category.name,
         description: category.description || '',
-        is_featured: category.is_featured,
-        sort_order: category.sort_order,
+        isFeatured: category.isFeatured,
+        sortOrder: category.sortOrder || 0,
       })
     } else {
       setEditingCategory(null)
       setFormData({
         name: '',
         description: '',
-        is_featured: false,
-        sort_order: 0,
+        isFeatured: false,
+        sortOrder: 0,
       })
     }
     setImageFile(null)
@@ -102,7 +102,7 @@ export default function Categories() {
   const closeModal = () => {
     setShowModal(false)
     setEditingCategory(null)
-    setFormData({ name: '', description: '', is_featured: false, sort_order: 0 })
+    setFormData({ name: '', description: '', isFeatured: false, sortOrder: 0 })
     setImageFile(null)
   }
 
@@ -131,7 +131,7 @@ export default function Categories() {
             <h3 className="font-semibold text-lg text-secondary-900 mb-2">{category.name}</h3>
             <p className="text-sm text-secondary-600 mb-4 line-clamp-2">{category.description}</p>
             <div className="flex gap-2 items-center mb-4">
-              {category.is_featured && (
+              {category.isFeatured && (
                 <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">Featured</span>
               )}
               <span className="text-xs text-secondary-500">{category.product_count} products</span>
@@ -198,8 +198,8 @@ export default function Categories() {
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.is_featured}
-                    onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                    checked={formData.isFeatured}
+                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                     className="w-4 h-4 text-primary-600"
                   />
                   <span className="text-sm font-medium text-secondary-700">Featured Category</span>
@@ -210,8 +210,8 @@ export default function Categories() {
                 <label className="block text-sm font-medium text-secondary-700 mb-2">Sort Order</label>
                 <input
                   type="number"
-                  value={formData.sort_order}
-                  onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) })}
+                  value={formData.sortOrder}
+                  onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) })}
                   className="input"
                 />
               </div>

@@ -46,17 +46,21 @@ export default function Products() {
 
     try {
       const data = new FormData()
-      Object.keys(formData).forEach(key => {
-        if (key === 'colors' || key === 'sizes') {
-          data.append(key, JSON.stringify(formData[key]))
-        } else {
-          data.append(key, formData[key])
-        }
-      })
-      imageFiles.forEach((file, i) => data.append(`image${i}`, file))
+      data.append('name', formData.name)
+      data.append('description', formData.description)
+      data.append('price', formData.price)
+      data.append('oldPrice', formData.old_price)
+      data.append('category', formData.category_id)
+      data.append('colors', formData.colors.join(','))
+      data.append('sizes', formData.sizes.join(','))
+      data.append('isFeatured', formData.is_featured)
+      data.append('isNewProduct', formData.is_new)
+      data.append('sortOrder', formData.sort_order)
+
+      imageFiles.forEach((file) => data.append('images', file))
 
       if (editingProduct) {
-        await productService.update(editingProduct.id, data)
+        await productService.update(editingProduct._id, data)
         toast.success('Product updated')
       } else {
         await productService.create(data)
@@ -87,10 +91,10 @@ export default function Products() {
       setEditingProduct(product)
       setFormData({
         name: product.name, description: product.description || '', 
-        price: product.price, old_price: product.old_price || '',
-        category_id: product.category_id, colors: product.colors || [],
-        sizes: product.sizes || [], is_featured: product.is_featured,
-        is_new: product.is_new, sort_order: product.sort_order
+        price: product.price, old_price: product.oldPrice || '',
+        category_id: product.category?._id || product.category || '', colors: product.colors || [],
+        sizes: product.sizes || [], is_featured: product.isFeatured,
+        is_new: product.isNewProduct, sort_order: product.sortOrder || 0
       })
     } else {
       setEditingProduct(null)
@@ -155,19 +159,19 @@ export default function Products() {
           </thead>
           <tbody className="divide-y divide-secondary-200">
             {products.map((product) => (
-              <tr key={product.id} className="hover:bg-secondary-50">
+              <tr key={product._id} className="hover:bg-secondary-50">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <img src={getImageUrl(product.images?.[0])} alt={product.name} className="w-12 h-12 object-cover rounded" />
                     <span className="font-medium text-secondary-900">{product.name}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-secondary-600">{product.category_name}</td>
+                <td className="px-4 py-3 text-sm text-secondary-600">{product.category?.name || '—'}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-secondary-900">${product.price}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    {product.is_featured && <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">Featured</span>}
-                    {product.is_new && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">New</span>}
+                    {product.isFeatured && <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">Featured</span>}
+                    {product.isNewProduct && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">New</span>}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -175,7 +179,7 @@ export default function Products() {
                     <button onClick={() => openModal(product)} className="p-2 hover:bg-secondary-100 rounded">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(product.id)} className="p-2 hover:bg-red-50 text-red-600 rounded">
+                    <button onClick={() => handleDelete(product._id)} className="p-2 hover:bg-red-50 text-red-600 rounded">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -204,7 +208,7 @@ export default function Products() {
                   <label className="block text-sm font-medium mb-2">Category *</label>
                   <select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} required className="input">
                     <option value="">Select category</option>
-                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                    {categories.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
                   </select>
                 </div>
               </div>
