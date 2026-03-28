@@ -44,5 +44,6 @@ export default api
 export const getImageUrl = (path) => {
   if (!path) return '/placeholder.jpg'
   if (path.startsWith('http')) return path
-  return `https://hari-leela-collections.onrender.com/api/uploads/${path}`
+  const baseURL = API_URL.replace(/\/api\/?$/, '')
+  return `${baseURL}/uploads/${path}`
 }
