@@ -81,7 +81,15 @@ router.get('/slug/:slug', async (req, res) => {
         if (!category) {
             return res.status(404).json({ msg: 'Category not found' });
         }
-        res.json(category);
+        const products = await Product.find({ category: category._id })
+            .populate('category', 'name slug')
+            .sort({ sortOrder: 1, createdAt: -1 });
+
+        const categoryData = category.toObject();
+        categoryData.products = products;
+        categoryData.productCount = products.length;
+
+        res.json(categoryData);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
