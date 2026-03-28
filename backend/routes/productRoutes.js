@@ -8,6 +8,33 @@ const Product = require('../models/product');
 const auth = require('../middleware/auth');
 const { slugify } = require('../utils/helpers');
 
+const parseList = (value) => {
+    if (value === undefined || value === null) return [];
+    if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+
+    const text = String(value).trim();
+    if (!text) return [];
+
+    if (text.startsWith('[') && text.endsWith(']')) {
+        try {
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                return parsed.map((item) => String(item).trim()).filter(Boolean);
+            }
+        } catch (_err) {
+            // fall through to comma-split
+        }
+    }
+
+    return text.split(',').map((item) => item.trim()).filter(Boolean);
+};
+
+const parseBoolean = (value, fallback) => {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value === 'boolean') return value;
+    return String(value).toLowerCase() === 'true';
+};
+
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -160,14 +187,35 @@ router.get('/slug/:slug', async (req, res) => {
 // @desc    Create a product
 // @access  Private
 router.post('/', [auth, upload.array('images', 10)], async (req, res) => {
-    const { name, description, price, oldPrice, colors, sizes, isFeatured, isNewProduct, category, sortOrder } = req.body;
+    const {
+        name,
+        description,
+        price,
+        oldPrice,
+        old_price,
+        colors,
+        sizes,
+        isFeatured,
+        is_featured,
+        isNewProduct,
+        is_new,
+        category,
+        category_id,
+        sortOrder,
+        sort_order
+    } = req.body;
 
     try {
         const slug = slugify(name);
         let product = await Product.findOne({ slug });
+        const categoryId = category || category_id;
 
         if (product) {
             return res.status(400).json({ errors: [{ msg: 'Product already exists' }] });
+        }
+
+        if (!categoryId) {
+            return res.status(400).json({ error: 'Category is required' });
         }
 
         const newProduct = new Product({
@@ -175,16 +223,16 @@ router.post('/', [auth, upload.array('images', 10)], async (req, res) => {
             slug,
             description,
             price,
-            oldPrice,
-            colors: colors ? colors.split(',') : [],
-            sizes: sizes ? sizes.split(',') : [],
-            isFeatured: isFeatured === 'true',
-            isNewProduct: isNewProduct === 'true',
-            category,
-            sortOrder
+            oldPrice: oldPrice ?? old_price,
+            colors: parseList(colors),
+            sizes: parseList(sizes),
+            isFeatured: parseBoolean(isFeatured ?? is_featured, false),
+            isNewProduct: parseBoolean(isNewProduct ?? is_new, false),
+            category: categoryId,
+            sortOrder: sortOrder ?? sort_order ?? 0
         });
 
-        if (req.files) {
+        if (req.files && req.files.length > 0) {
             newProduct.images = req.files.map(file => 'products/' + file.filename);
         }
 
@@ -200,7 +248,24 @@ router.post('/', [auth, upload.array('images', 10)], async (req, res) => {
 // @desc    Update a product
 // @access  Private
 router.put('/:id', [auth, upload.array('images', 10)], async (req, res) => {
-    const { name, description, price, oldPrice, colors, sizes, isFeatured, isNewProduct, category, sortOrder, existingImages } = req.body;
+    const {
+        name,
+        description,
+        price,
+        oldPrice,
+        old_price,
+        colors,
+        sizes,
+        isFeatured,
+        is_featured,
+        isNewProduct,
+        is_new,
+        category,
+        category_id,
+        sortOrder,
+        sort_order,
+        existingImages
+    } = req.body;
     const { id } = req.params;
 
     try {
@@ -219,19 +284,23 @@ router.put('/:id', [auth, upload.array('images', 10)], async (req, res) => {
             product.slug = newSlug;
         }
 
-        if (description) product.description = description;
-        if (price) product.price = price;
-        if (oldPrice) product.oldPrice = oldPrice;
-        if (colors) product.colors = colors.split(',');
-        if (sizes) product.sizes = sizes.split(',');
-        if (isFeatured) product.isFeatured = isFeatured === 'true';
-        if (isNewProduct) product.isNewProduct = isNewProduct === 'true';
-        if (category) product.category = category;
-        if (sortOrder) product.sortOrder = sortOrder;
+        if (description !== undefined) product.description = description;
+        if (price !== undefined) product.price = price;
+        if (oldPrice !== undefined || old_price !== undefined) product.oldPrice = oldPrice ?? old_price;
+        if (colors !== undefined) product.colors = parseList(colors);
+        if (sizes !== undefined) product.sizes = parseList(sizes);
+        if (isFeatured !== undefined || is_featured !== undefined) {
+            product.isFeatured = parseBoolean(isFeatured ?? is_featured, product.isFeatured);
+        }
+        if (isNewProduct !== undefined || is_new !== undefined) {
+            product.isNewProduct = parseBoolean(isNewProduct ?? is_new, product.isNewProduct);
+        }
+        if (category !== undefined || category_id !== undefined) product.category = category || category_id;
+        if (sortOrder !== undefined || sort_order !== undefined) product.sortOrder = sortOrder ?? sort_order;
 
         let updatedImages = existingImages ? (Array.isArray(existingImages) ? existingImages : [existingImages]) : [];
 
-        if (req.files) {
+        if (req.files && req.files.length > 0) {
             const newImages = req.files.map(file => 'products/' + file.filename);
             updatedImages = [...updatedImages, ...newImages];
         }
