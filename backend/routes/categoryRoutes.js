@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Category = require('../models/category');
+const Product = require('../models/product');
 const auth = require('../middleware/auth');
 const { slugify } = require('../utils/helpers');
 
@@ -174,8 +175,22 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(404).json({ msg: 'Category not found' });
         }
 
-        // TODO: Delete products and product images associated with the category
+        // Find and delete all products in this category
+        const products = await Product.find({ category: category._id });
+        for (const product of products) {
+            // Delete product images
+            if (product.images && product.images.length > 0) {
+                for (const image of product.images) {
+                    const imagePath = path.join(__dirname, '../uploads', image);
+                    if (fs.existsSync(imagePath)) {
+                        fs.unlinkSync(imagePath);
+                    }
+                }
+            }
+        }
+        await Product.deleteMany({ category: category._id });
 
+        // Delete category image
         if (category.image) {
             const imagePath = path.join(__dirname, '../uploads', category.image);
             if (fs.existsSync(imagePath)) {
@@ -185,7 +200,7 @@ router.delete('/:id', auth, async (req, res) => {
 
         await category.deleteOne();
 
-        res.json({ msg: 'Category removed' });
+        res.json({ msg: 'Category and associated products removed' });
     } catch (err) {
         console.error(err.message);
         if (err.kind === 'ObjectId') {
