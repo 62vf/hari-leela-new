@@ -7,7 +7,8 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "data:import": "node seed.js",
-    "data:destroy": "node seed.js -d"
+    "data:destroy": "node seed.js -d",
+    "admin:create": "node scripts/createAdmin.js"
   },
   "keywords": [],
   "author": "",
