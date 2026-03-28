@@ -151,7 +151,11 @@ router.get('/new', async (req, res) => {
 // @route   GET api/products/:id
 // @desc    Get product by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
+    if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+        return next();
+    }
+
     try {
         const product = await Product.findById(req.params.id).populate('category', 'name slug');
         if (!product) {

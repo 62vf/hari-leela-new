@@ -52,7 +52,11 @@ router.get('/featured', async (req, res) => {
 // @route   GET api/categories/:id
 // @desc    Get category by ID
 // @access  Public
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
+    if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+        return next();
+    }
+
     try {
         const category = await Category.findById(req.params.id);
         if (!category) {
@@ -142,9 +146,9 @@ router.put('/:id', [auth, upload.single('image')], async (req, res) => {
             category.slug = newSlug;
         }
 
-        if (description) category.description = description;
-        if (isFeatured) category.isFeatured = isFeatured === 'true';
-        if (sortOrder) category.sortOrder = sortOrder;
+        if (description !== undefined) category.description = description;
+        if (isFeatured !== undefined) category.isFeatured = String(isFeatured) === 'true';
+        if (sortOrder !== undefined) category.sortOrder = sortOrder;
 
         if (req.file) {
             if (category.image) {
